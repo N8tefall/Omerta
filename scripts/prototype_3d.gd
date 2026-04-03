@@ -1,11 +1,11 @@
 extends Node3D
 
-const CAMERA_MOVE_SPEED := 32.0
-const CAMERA_ROTATE_SPEED := 1.6
-const CAMERA_MIN_HEIGHT := 8.0
-const CAMERA_MAX_HEIGHT := 28.0
-const CAMERA_MIN_TILT := -88.0
-const CAMERA_MAX_TILT := -8.0
+const CAMERA_MOVE_SPEED := 34.0
+const CAMERA_ROTATE_SPEED := 1.2
+const CAMERA_MIN_HEIGHT := 24.0
+const CAMERA_MAX_HEIGHT := 58.0
+const CAMERA_MIN_TILT := -72.0
+const CAMERA_MAX_TILT := -48.0
 const RESIDENTIAL_ONLY := true
 const GRID_BLOCKS := 10
 const BLOCK_SIZE := 18.0
@@ -14,15 +14,16 @@ const HALF_CITY := ((GRID_BLOCKS * BLOCK_SIZE) + ((GRID_BLOCKS + 1) * ROAD_SIZE)
 const TRAFFIC_LIGHT_CYCLE := 7.0
 const LANE_OFFSET := 1.6
 const SIDEWALK_OFFSET := 4.9
-const CAMERA_STREET_OFFSET_Z := 18.0
+const CAMERA_STREET_OFFSET_Z := 42.0
 const DAY_NIGHT_CYCLE := 96.0
 const ROAD_ASSET_SCALE := 1.0
+const USE_IMPORTED_ROADS := false
 
 var camera_pivot: Node3D
 var camera_node: Camera3D
 var camera_target_position: Vector3 = Vector3.ZERO
 var camera_target_rotation_y: float = 0.0
-var camera_target_tilt_x: float = -28.0
+var camera_target_tilt_x: float = -52.0
 var sun_light: DirectionalLight3D
 var fill_light: DirectionalLight3D
 var world_environment: Environment
@@ -41,7 +42,6 @@ var crew_portrait_buttons: Array[Button] = []
 var action_buttons: Dictionary = {}
 var command_mode: String = "control"
 var is_right_dragging: bool = false
-var is_left_mouse_down: bool = false
 var right_drag_start: Vector2 = Vector2.ZERO
 var last_mouse_position: Vector2 = Vector2.ZERO
 var camera_drag_sensitivity: float = 0.18
@@ -75,14 +75,14 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse_event: InputEventMouseButton = event
-		if mouse_event.button_index == MOUSE_BUTTON_LEFT:
-			is_left_mouse_down = mouse_event.pressed
 		if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP and mouse_event.pressed:
-			camera_target_position.y = maxf(CAMERA_MIN_HEIGHT, camera_target_position.y - 1.5)
-			camera_node.position.z = maxf(10.0, camera_node.position.z - 1.2)
+			camera_target_position.y = maxf(CAMERA_MIN_HEIGHT, camera_target_position.y - 2.0)
+			camera_node.position.y = maxf(14.0, camera_node.position.y - 1.2)
+			camera_node.position.z = maxf(20.0, camera_node.position.z - 1.8)
 		elif mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN and mouse_event.pressed:
-			camera_target_position.y = minf(CAMERA_MAX_HEIGHT, camera_target_position.y + 1.5)
-			camera_node.position.z = minf(32.0, camera_node.position.z + 1.2)
+			camera_target_position.y = minf(CAMERA_MAX_HEIGHT, camera_target_position.y + 2.0)
+			camera_node.position.y = minf(24.0, camera_node.position.y + 1.2)
+			camera_node.position.z = minf(38.0, camera_node.position.z + 1.8)
 		elif mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
 			_handle_left_click(mouse_event.position)
 		elif mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
@@ -96,10 +96,8 @@ func _input(event: InputEvent) -> void:
 			is_right_dragging = false
 	elif event is InputEventMouseMotion:
 		var motion_event: InputEventMouseMotion = event
-		if is_right_dragging and is_left_mouse_down:
+		if is_right_dragging:
 			_rotate_camera_with_mouse(motion_event.relative)
-		elif is_right_dragging:
-			_pan_camera_with_mouse(motion_event.relative)
 		last_mouse_position = motion_event.position
 
 
@@ -115,18 +113,18 @@ func _build_world() -> void:
 	var env: WorldEnvironment = WorldEnvironment.new()
 	var environment: Environment = Environment.new()
 	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color("1a1a1a")
+	environment.background_color = Color("bba989")
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color("57534d")
-	environment.ambient_light_energy = 0.5
+	environment.ambient_light_color = Color("b39d7c")
+	environment.ambient_light_energy = 0.68
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	environment.adjustment_enabled = true
-	environment.adjustment_brightness = 0.92
-	environment.adjustment_contrast = 1.18
+	environment.adjustment_brightness = 1.03
+	environment.adjustment_contrast = 1.08
 	environment.fog_enabled = true
-	environment.fog_light_color = Color("262626")
-	environment.fog_light_energy = 0.4
-	environment.fog_density = 0.008
+	environment.fog_light_color = Color("b08f64")
+	environment.fog_light_energy = 0.22
+	environment.fog_density = 0.004
 	environment.ssr_enabled = true
 	environment.ssil_enabled = true
 	world_environment = environment
@@ -134,29 +132,30 @@ func _build_world() -> void:
 	add_child(env)
 
 	sun_light = DirectionalLight3D.new()
-	sun_light.rotation_degrees = Vector3(-48, 40, 0)
-	sun_light.light_energy = 1.25
-	sun_light.light_color = Color("ddd4c3")
+	sun_light.rotation_degrees = Vector3(-58, 35, 0)
+	sun_light.light_energy = 1.38
+	sun_light.light_color = Color("f0debc")
 	sun_light.shadow_enabled = true
 	add_child(sun_light)
 
 	fill_light = DirectionalLight3D.new()
-	fill_light.rotation_degrees = Vector3(-70, -120, 0)
-	fill_light.light_energy = 0.18
-	fill_light.light_color = Color("7b766d")
+	fill_light.rotation_degrees = Vector3(-64, -118, 0)
+	fill_light.light_energy = 0.22
+	fill_light.light_color = Color("9f8d73")
 	add_child(fill_light)
 
 	camera_pivot = Node3D.new()
-	camera_pivot.position = Vector3(0, 18, 18)
+	camera_pivot.position = Vector3(0, 36, 0)
+	camera_pivot.rotation_degrees.y = -45.0
 	add_child(camera_pivot)
 	camera_target_position = camera_pivot.position
 	camera_target_rotation_y = camera_pivot.rotation.y
 
 	camera_node = Camera3D.new()
 	camera_node.current = true
-	camera_node.position = Vector3(0, 8.0, CAMERA_STREET_OFFSET_Z)
-	camera_node.rotation_degrees = Vector3(-28, 0, 0)
-	camera_node.fov = 58.0
+	camera_node.position = Vector3(0, 24.0, CAMERA_STREET_OFFSET_Z)
+	camera_node.rotation_degrees = Vector3(-60, 0, 0)
+	camera_node.fov = 28.0
 	camera_node.near = 0.1
 	camera_node.far = 600.0
 	camera_pivot.add_child(camera_node)
@@ -198,10 +197,10 @@ func _build_hud() -> void:
 	hud_label.scroll_active = false
 	hud_label.text = (
 		"[b]Direction:[/b] RimWorld-style crew management inside a Mafia-like 3D city.\n"
-		+ "[b]Camera:[/b] ZQSD move, A/E rotate, mouse wheel zoom.\n"
-		+ "[b]Camera Drag:[/b] Right drag pans, both mouse buttons drag rotates. R/F tilts from street view to top view.\n"
+		+ "[b]Camera:[/b] QDZS move, mouse wheel zoom.\n"
+		+ "[b]Camera Drag:[/b] Hold right mouse and drag to rotate/tilt. Press `C` to reset to the isometric city view.\n"
 		+ "[b]Crew Controls:[/b] Left click portraits/actions. Left click world to issue manual orders.\n"
-		+ "[b]Prototype Goal:[/b] Test a clean 10x10 residential city grid with readable streets, towers, homes, shops, and gang work."
+		+ "[b]Prototype Goal:[/b] Test a denser 1920s residential/commercial district with cleaner isometric readability."
 	)
 	panel_content.add_child(hud_label)
 
@@ -210,8 +209,8 @@ func _build_hud() -> void:
 	stats_label.fit_content = true
 	stats_label.scroll_active = false
 	stats_label.text = (
-		"[b]District:[/b] Residential only, rebuilt from scratch\n"
-		+ "[b]Layout:[/b] 10x10 blocks, connected streets, towers, homes, shops, gas station\n"
+		"[b]District:[/b] Residential only, inspired by classic gangster management games\n"
+		+ "[b]Layout:[/b] 10x10 blocks, dense brick blocks, stoops, corner shops, landmark towers\n"
 		+ "[b]Player Crew:[/b] 3 gang members starting in Residential\n"
 		+ "[b]Work Types:[/b] Runner, Shop, Lookout, Collection, Park Meet"
 	)
@@ -323,15 +322,8 @@ func _update_camera(delta: float) -> void:
 		var flattened_basis: Basis = Basis.from_euler(Vector3(0.0, camera_pivot.rotation.y, 0.0))
 		var direction: Vector3 = (flattened_basis * move_input).normalized()
 		camera_target_position += direction * CAMERA_MOVE_SPEED * delta
-
-	if Input.is_key_pressed(KEY_A):
-		camera_target_rotation_y += CAMERA_ROTATE_SPEED * delta
-	if Input.is_key_pressed(KEY_E):
-		camera_target_rotation_y -= CAMERA_ROTATE_SPEED * delta
-	if Input.is_key_pressed(KEY_R):
-		camera_target_tilt_x -= 32.0 * delta
-	if Input.is_key_pressed(KEY_F):
-		camera_target_tilt_x += 32.0 * delta
+	if Input.is_key_pressed(KEY_C):
+		_reset_camera_to_isometric()
 
 	camera_target_position.x = clampf(camera_target_position.x, -HALF_CITY + 12.0, HALF_CITY - 12.0)
 	camera_target_position.z = clampf(camera_target_position.z, -HALF_CITY + 12.0, HALF_CITY - 12.0)
@@ -341,21 +333,20 @@ func _update_camera(delta: float) -> void:
 	camera_pivot.position = camera_pivot.position.lerp(camera_target_position, clampf(delta * 7.5, 0.0, 1.0))
 	camera_pivot.rotation.y = lerp_angle(camera_pivot.rotation.y, camera_target_rotation_y, clampf(delta * 8.0, 0.0, 1.0))
 	camera_node.rotation_degrees.x = lerpf(camera_node.rotation_degrees.x, camera_target_tilt_x, clampf(delta * 8.0, 0.0, 1.0))
-
-
-func _pan_camera_with_mouse(relative: Vector2) -> void:
-	var flattened_basis: Basis = Basis.from_euler(Vector3(0.0, camera_pivot.rotation.y, 0.0))
-	var zoom_ratio: float = inverse_lerp(CAMERA_MIN_HEIGHT, CAMERA_MAX_HEIGHT, camera_target_position.y)
-	var pan_scale: float = lerpf(0.38, 0.92, zoom_ratio)
-	var pan_vector: Vector3 = flattened_basis * Vector3(-relative.x * camera_drag_sensitivity * pan_scale, 0.0, -relative.y * camera_drag_sensitivity * pan_scale)
-	camera_target_position += pan_vector
-	camera_target_position.x = clampf(camera_target_position.x, -HALF_CITY + 12.0, HALF_CITY - 12.0)
-	camera_target_position.z = clampf(camera_target_position.z, -HALF_CITY + 12.0, HALF_CITY - 12.0)
+	camera_node.position.y = lerpf(camera_node.position.y, clampf(camera_node.position.y, 18.0, 32.0), clampf(delta * 8.0, 0.0, 1.0))
+	camera_node.position.z = lerpf(camera_node.position.z, clampf(camera_node.position.z, 28.0, 54.0), clampf(delta * 8.0, 0.0, 1.0))
 
 
 func _rotate_camera_with_mouse(relative: Vector2) -> void:
-	camera_target_rotation_y -= relative.x * camera_rotate_drag_sensitivity
-	camera_target_tilt_x = clampf(camera_target_tilt_x + (relative.y * 0.06), CAMERA_MIN_TILT, CAMERA_MAX_TILT)
+	camera_target_rotation_y -= relative.x * (camera_rotate_drag_sensitivity * 0.45)
+	camera_target_tilt_x = clampf(camera_target_tilt_x - (relative.y * 0.035), CAMERA_MIN_TILT, CAMERA_MAX_TILT)
+
+
+func _reset_camera_to_isometric() -> void:
+	camera_target_position = Vector3(0, 36, 0)
+	camera_target_rotation_y = deg_to_rad(-45.0)
+	camera_target_tilt_x = -60.0
+	camera_node.position = Vector3(0, 24.0, CAMERA_STREET_OFFSET_Z)
 
 
 func _add_ground_plane(pos: Vector3, plane_size: Vector2, color: Color) -> void:
@@ -418,7 +409,7 @@ func _add_road_grid() -> void:
 
 
 func _has_imported_road_assets() -> bool:
-	return ResourceLoader.exists("res://assets/external/kenney_city-kit-roads/Models/GLB format/road-straight.glb") and ResourceLoader.exists("res://assets/external/kenney_city-kit-roads/Models/GLB format/road-crossroad-line.glb")
+	return USE_IMPORTED_ROADS and ResourceLoader.exists("res://assets/external/kenney_city-kit-roads/Models/GLB format/road-straight.glb") and ResourceLoader.exists("res://assets/external/kenney_city-kit-roads/Models/GLB format/road-crossroad-line.glb")
 
 
 func _add_imported_road_grid(road_centers: Array[float]) -> void:
@@ -448,21 +439,21 @@ func _add_imported_road_grid(road_centers: Array[float]) -> void:
 
 
 func _add_district_surfaces() -> void:
-	_add_box(Vector3(0, 0.01, 0), Vector3(HALF_CITY * 2.0 - 4.0, 0.02, HALF_CITY * 2.0 - 4.0), Color("6a5b4e"))
+	_add_box(Vector3(0, 0.01, 0), Vector3(HALF_CITY * 2.0 - 4.0, 0.02, HALF_CITY * 2.0 - 4.0), Color("8f7f6c"))
 
 	var centers := _get_block_centers()
 	for center_data: Dictionary in centers:
 		var center: Vector3 = center_data["position"]
-		_add_box(Vector3(center.x, 0.025, center.z), Vector3(BLOCK_SIZE, 0.03, BLOCK_SIZE), Color("7c7366"))
-		_add_box(Vector3(center.x, 0.04, center.z), Vector3(BLOCK_SIZE - 3.0, 0.025, BLOCK_SIZE - 3.0), Color("6d6257"))
+		_add_box(Vector3(center.x, 0.025, center.z), Vector3(BLOCK_SIZE, 0.03, BLOCK_SIZE), Color("988571"))
+		_add_box(Vector3(center.x, 0.04, center.z), Vector3(BLOCK_SIZE - 2.2, 0.025, BLOCK_SIZE - 2.2), Color("8a7867"))
 
-	var park_outer_color := Color("5e764f")
-	var park_inner_color := Color("748d5f")
+	var park_outer_color := Color("65754d")
+	var park_inner_color := Color("7e8d61")
 	var park_center := _get_block_center(4, 4)
 	_add_box(Vector3(park_center.x, 0.03, park_center.z), Vector3(BLOCK_SIZE, 0.04, BLOCK_SIZE), park_outer_color)
-	_add_box(Vector3(park_center.x, 0.04, park_center.z), Vector3(BLOCK_SIZE - 5.0, 0.05, BLOCK_SIZE - 5.0), park_inner_color)
-	_add_box(Vector3(park_center.x, 0.05, park_center.z), Vector3(3, 0.05, BLOCK_SIZE), Color("b8b09d"))
-	_add_box(Vector3(park_center.x, 0.05, park_center.z), Vector3(BLOCK_SIZE, 0.05, 3), Color("b8b09d"))
+	_add_box(Vector3(park_center.x, 0.04, park_center.z), Vector3(BLOCK_SIZE - 3.8, 0.05, BLOCK_SIZE - 3.8), park_inner_color)
+	_add_box(Vector3(park_center.x, 0.05, park_center.z), Vector3(2.5, 0.05, BLOCK_SIZE - 2.5), Color("d0c1a7"))
+	_add_box(Vector3(park_center.x, 0.05, park_center.z), Vector3(BLOCK_SIZE - 2.5, 0.05, 2.5), Color("d0c1a7"))
 	for x_pos in [-4.0, 4.0]:
 		for z_pos in [-4.0, 4.0]:
 			_add_box(Vector3(park_center.x + x_pos, 2.0, park_center.z + z_pos), Vector3(1.3, 4.0, 1.3), Color("5e4a32"))
@@ -480,10 +471,12 @@ func _add_building_blockout() -> void:
 			continue
 		if row == 0 and col == GRID_BLOCKS - 1:
 			_build_gas_station_block(block_center, "gas_station_main")
-		elif row == 0 or row == GRID_BLOCKS - 1 or col == 0 or col == GRID_BLOCKS - 1 or ((row + col) % 3 == 0):
+		elif row in [1, 2, 7, 8] and col in [2, 6, 7]:
+			_build_tower_block(block_center, "tower_%d_%d" % [row, col])
+		elif row == 0 or row == GRID_BLOCKS - 1 or col == 0 or col == GRID_BLOCKS - 1 or ((row + col) % 4 != 0):
 			_build_house_block(block_center, "house_%d_%d" % [row, col])
 		else:
-			_build_tower_block(block_center, "tower_%d_%d" % [row, col])
+			_build_corner_block(block_center, "corner_%d_%d" % [row, col])
 
 
 func _add_street_furniture() -> void:
@@ -499,133 +492,70 @@ func _add_street_furniture() -> void:
 
 func _spawn_agents() -> void:
 	moving_agents.clear()
+	var road_centers: Array[float] = _get_road_centers()
+	var sidewalk_lines: Array[float] = []
+	for road_center: float in road_centers:
+		sidewalk_lines.append(road_center - SIDEWALK_OFFSET)
+		sidewalk_lines.append(road_center + SIDEWALK_OFFSET)
 
-	_add_agent(
-		_make_pedestrian_mesh(Color("d8ccb7"), Color("5b4334")),
-		PackedVector3Array([Vector3(-84, 0.8, -SIDEWALK_OFFSET), Vector3(84, 0.8, -SIDEWALK_OFFSET)]),
-		4.0,
-		"pedestrian"
-	)
-	_add_agent(
-		_make_pedestrian_mesh(Color("c2b097"), Color("32455e")),
-		PackedVector3Array([Vector3(-18.0 - SIDEWALK_OFFSET, 0.8, -18), Vector3(-18.0 - SIDEWALK_OFFSET, 0.8, 84)]),
-		3.2,
-		"pedestrian"
-	)
-	_add_agent(
-		_make_vehicle_mesh(Color("2a2a2a"), Color("54514b")),
-		PackedVector3Array([Vector3(-92, 0.45, -42 - LANE_OFFSET), Vector3(92, 0.45, -42 - LANE_OFFSET)]),
-		9.0,
-		"vehicle"
-	)
-	_add_agent(
-		_make_vehicle_mesh(Color("7c6b56"), Color("cbbd97")),
-		PackedVector3Array([Vector3(92, 0.45, 42 + LANE_OFFSET), Vector3(-92, 0.45, 42 + LANE_OFFSET)]),
-		10.5,
-		"vehicle"
-	)
-	_add_agent(
-		_make_vehicle_mesh(Color("403e3b"), Color("66615c")),
-		PackedVector3Array([Vector3(-92, 0.45, -72.0 - LANE_OFFSET), Vector3(92, 0.45, -72.0 - LANE_OFFSET)]),
-		7.0,
-		"vehicle"
-	)
-	_add_agent(
-		_make_pedestrian_mesh(Color("dfd2be"), Color("4f5a34")),
-		PackedVector3Array([Vector3(18.0 + SIDEWALK_OFFSET, 0.8, 18), Vector3(18.0 + SIDEWALK_OFFSET, 0.8, 84)]),
-		3.6,
-		"pedestrian"
-	)
-	_add_agent(
-		_make_pedestrian_mesh(Color("ceb89a"), Color("6b4a37")),
-		PackedVector3Array([Vector3(-84, 0.8, 18 + SIDEWALK_OFFSET), Vector3(84, 0.8, 18 + SIDEWALK_OFFSET)]),
-		3.8,
-		"pedestrian"
-	)
-	_add_agent(
-		_make_vehicle_mesh(Color("5a2f29"), Color("8a6a5f")),
-		PackedVector3Array([Vector3(-92, 0.45, 72 - LANE_OFFSET), Vector3(92, 0.45, 72 - LANE_OFFSET)]),
-		8.4,
-		"vehicle"
-	)
-	_add_agent(
-		_make_pedestrian_mesh(Color("d5c6b0"), Color("3a3f59")),
-		PackedVector3Array([Vector3(-84, 0.8, -30 + SIDEWALK_OFFSET), Vector3(84, 0.8, -30 + SIDEWALK_OFFSET)]),
-		3.5,
-		"pedestrian"
-	)
-	_add_agent(
-		_make_pedestrian_mesh(Color("cdb294"), Color("574234")),
-		PackedVector3Array([Vector3(-84, 0.8, 30 - SIDEWALK_OFFSET), Vector3(84, 0.8, 30 - SIDEWALK_OFFSET)]),
-		3.4,
-		"pedestrian"
-	)
-	_add_agent(
-		_make_pedestrian_mesh(Color("c9b08f"), Color("2f523b")),
-		PackedVector3Array([Vector3(54 + SIDEWALK_OFFSET, 0.8, -84), Vector3(54 + SIDEWALK_OFFSET, 0.8, 84)]),
-		3.0,
-		"pedestrian"
-	)
-	_add_agent(
-		_make_vehicle_mesh(Color("252525"), Color("6b655c")),
-		PackedVector3Array([Vector3(-92, 0.45, -LANE_OFFSET), Vector3(92, 0.45, -LANE_OFFSET)]),
-		7.6,
-		"vehicle"
-	)
-	_add_agent(
-		_make_vehicle_mesh(Color("2b2b2b"), Color("5b5852")),
-		PackedVector3Array([Vector3(-54 - LANE_OFFSET, 0.45, -72), Vector3(-54 - LANE_OFFSET, 0.45, 72)]),
-		8.2,
-		"vehicle"
-	)
-	_add_agent(
-		_make_vehicle_mesh(Color("353535"), Color("868077")),
-		PackedVector3Array([Vector3(-54 + LANE_OFFSET, 0.45, 72), Vector3(-54 + LANE_OFFSET, 0.45, -72)]),
-		7.5,
-		"vehicle"
-	)
-	_add_agent(
-		_make_pedestrian_mesh(Color("e0ccb0"), Color("6f6240")),
-		PackedVector3Array([Vector3(-36, 0.8, -54 - SIDEWALK_OFFSET), Vector3(36, 0.8, -54 - SIDEWALK_OFFSET)]),
-		3.1,
-		"pedestrian"
-	)
-	_add_agent(
-		_make_pedestrian_mesh(Color("d7c19e"), Color("7a3f3f")),
-		PackedVector3Array([Vector3(36, 0.8, 54 + SIDEWALK_OFFSET), Vector3(-36, 0.8, 54 + SIDEWALK_OFFSET)]),
-		3.7,
-		"pedestrian"
-	)
-	_add_agent(
-		_make_vehicle_mesh(Color("1f1f1f"), Color("c1b49d")),
-		PackedVector3Array([Vector3(92, 0.45, -24 + LANE_OFFSET), Vector3(-92, 0.45, -24 + LANE_OFFSET)]),
-		8.8,
-		"vehicle"
-	)
-	_add_agent(
-		_make_vehicle_mesh(Color("4b2923"), Color("8d7467")),
-		PackedVector3Array([Vector3(24 + LANE_OFFSET, 0.45, -92), Vector3(24 + LANE_OFFSET, 0.45, 92)]),
-		8.1,
-		"vehicle"
-	)
-	_add_agent(
-		_make_vehicle_mesh(Color("323232"), Color("777067")),
-		PackedVector3Array([Vector3(24 - LANE_OFFSET, 0.45, 92), Vector3(24 - LANE_OFFSET, 0.45, -92)]),
-		7.9,
-		"vehicle"
-	)
-	_add_agent(
-		_make_pedestrian_mesh(Color("dfc3a0"), Color("2a2f3e")),
-		PackedVector3Array([Vector3(-66 - SIDEWALK_OFFSET, 0.8, -84), Vector3(-66 - SIDEWALK_OFFSET, 0.8, 84)]),
-		3.0,
-		"pedestrian"
-	)
-	_add_agent(
-		_make_pedestrian_mesh(Color("d8c8b1"), Color("6d513a")),
-		PackedVector3Array([Vector3(84, 0.8, -54 + SIDEWALK_OFFSET), Vector3(-84, 0.8, -54 + SIDEWALK_OFFSET)]),
-		3.2,
-		"pedestrian"
-	)
+	var ped_colors: Array[Array] = [
+		[Color("d8ccb7"), Color("5b4334")],
+		[Color("c2b097"), Color("32455e")],
+		[Color("dfd2be"), Color("4f5a34")],
+		[Color("ceb89a"), Color("6b4a37")],
+		[Color("d5c6b0"), Color("3a3f59")],
+		[Color("d7c19e"), Color("7a3f3f")],
+	]
+	var ped_pairs: Array[Dictionary] = [
+		{"axis": "x", "line": sidewalk_lines[2]},
+		{"axis": "x", "line": sidewalk_lines[5]},
+		{"axis": "x", "line": sidewalk_lines[10]},
+		{"axis": "x", "line": sidewalk_lines[15]},
+		{"axis": "z", "line": sidewalk_lines[6]},
+		{"axis": "z", "line": sidewalk_lines[13]},
+	]
+	for i in range(ped_pairs.size()):
+		var pair: Dictionary = ped_pairs[i]
+		var colors: Array = ped_colors[i % ped_colors.size()]
+		var pair_axis: String = pair["axis"]
+		var pair_line: float = pair["line"]
+		if pair_axis == "x":
+			_add_agent(
+				_make_pedestrian_mesh(colors[0], colors[1]),
+				PackedVector3Array([Vector3(-HALF_CITY + 6.0, 0.8, pair_line), Vector3(HALF_CITY - 6.0, 0.8, pair_line)]),
+				3.0 + float(i % 3) * 0.35,
+				"pedestrian"
+			)
+		else:
+			_add_agent(
+				_make_pedestrian_mesh(colors[0], colors[1]),
+				PackedVector3Array([Vector3(pair_line, 0.8, -HALF_CITY + 6.0), Vector3(pair_line, 0.8, HALF_CITY - 6.0)]),
+				3.0 + float(i % 3) * 0.35,
+				"pedestrian"
+			)
+
+	var vehicle_specs: Array[Dictionary] = [
+		{"axis": "x", "line": road_centers[2] - LANE_OFFSET, "color_a": Color("2a2a2a"), "color_b": Color("54514b"), "speed": 8.2, "reverse": false},
+		{"axis": "x", "line": road_centers[5] + LANE_OFFSET, "color_a": Color("7c6b56"), "color_b": Color("cbbd97"), "speed": 9.0, "reverse": true},
+		{"axis": "x", "line": road_centers[8] - LANE_OFFSET, "color_a": Color("4b2923"), "color_b": Color("8d7467"), "speed": 7.4, "reverse": false},
+		{"axis": "z", "line": road_centers[3] - LANE_OFFSET, "color_a": Color("252525"), "color_b": Color("6b655c"), "speed": 7.6, "reverse": false},
+		{"axis": "z", "line": road_centers[7] + LANE_OFFSET, "color_a": Color("323232"), "color_b": Color("777067"), "speed": 8.0, "reverse": true},
+	]
+	for spec: Dictionary in vehicle_specs:
+		var path: PackedVector3Array
+		var spec_axis: String = spec["axis"]
+		var spec_line: float = spec["line"]
+		var spec_color_a: Color = spec["color_a"]
+		var spec_color_b: Color = spec["color_b"]
+		var spec_speed: float = spec["speed"]
+		var spec_reverse: bool = spec["reverse"]
+		if spec_axis == "x":
+			path = PackedVector3Array([Vector3(-HALF_CITY - 8.0, 0.45, spec_line), Vector3(HALF_CITY + 8.0, 0.45, spec_line)])
+		else:
+			path = PackedVector3Array([Vector3(spec_line, 0.45, -HALF_CITY - 8.0), Vector3(spec_line, 0.45, HALF_CITY + 8.0)])
+		if spec_reverse:
+			path = PackedVector3Array([path[1], path[0]])
+		_add_agent(_make_vehicle_mesh(spec_color_a, spec_color_b), path, spec_speed, "vehicle")
 
 
 func _spawn_player_crews() -> void:
@@ -968,7 +898,7 @@ func _update_status_text() -> void:
 		+ "[b]Current State:[/b] %s\n"
 		+ "[b]Current Job:[/b] %s\n"
 		+ "[b]Preferred Jobs:[/b] %s\n"
-		+ "[b]Mouse:[/b] Left click portraits/actions. Move/Attack use ground click. Forced Work uses right click on buildings. Right drag pans. Both buttons drag rotates."
+		+ "[b]Mouse:[/b] Left click portraits/actions. Move/Attack use ground click. Forced Work uses right click on buildings. Hold right mouse to rotate and tilt."
 	) % [
 		crew["name"],
 		control_text,
@@ -1072,7 +1002,7 @@ func _update_auto_work_state(crew: Dictionary, delta: float) -> void:
 	if crew["assigned_job_id"] == "":
 		_assign_best_auto_job(crew)
 
-	var current_job := _get_work_opportunity_by_id(crew["assigned_job_id"])
+	var current_job: Dictionary = _get_work_opportunity_by_id(crew["assigned_job_id"])
 	if current_job.is_empty():
 		return
 
@@ -1090,7 +1020,7 @@ func _update_auto_work_state(crew: Dictionary, delta: float) -> void:
 		crew["current_job_name"] = current_job["job_type"]
 		if job_timer <= 0.0:
 			_assign_best_auto_job(crew, crew["assigned_job_id"])
-			var next_job := _get_work_opportunity_by_id(crew["assigned_job_id"])
+			var next_job: Dictionary = _get_work_opportunity_by_id(crew["assigned_job_id"])
 			if next_job.is_empty():
 				return
 			_set_crew_route(crew, _snap_to_sidewalk(next_job["position"]))
@@ -1276,6 +1206,14 @@ func _get_block_centers() -> Array[Dictionary]:
 	return centers
 
 
+func _get_road_centers() -> Array[float]:
+	var road_centers: Array[float] = []
+	for i in range(GRID_BLOCKS + 1):
+		var road_center: float = -HALF_CITY + (ROAD_SIZE * 0.5) + float(i) * (BLOCK_SIZE + ROAD_SIZE)
+		road_centers.append(road_center)
+	return road_centers
+
+
 func _get_block_center(row: int, col: int) -> Vector3:
 	var x_pos: float = -HALF_CITY + ROAD_SIZE + (BLOCK_SIZE * 0.5) + float(col) * (BLOCK_SIZE + ROAD_SIZE)
 	var z_pos: float = -HALF_CITY + ROAD_SIZE + (BLOCK_SIZE * 0.5) + float(row) * (BLOCK_SIZE + ROAD_SIZE)
@@ -1283,55 +1221,56 @@ func _get_block_center(row: int, col: int) -> Vector3:
 
 
 func _build_house_block(block_center: Vector3, block_id: String) -> void:
-	var lot_offsets: Array[Vector3] = []
-	for z_idx in range(2):
-		for x_idx in range(2):
-			var x_pos: float = -4.4 + float(x_idx) * 8.8
-			var z_pos: float = -4.4 + float(z_idx) * 8.8
-			lot_offsets.append(Vector3(x_pos, 0, z_pos))
+	var brick_primary: Color = Color("875a42")
+	var brick_secondary: Color = Color("6f4737")
+	var stone_trim: Color = Color("d3c0a3")
+	var roof_dark: Color = Color("4c4037")
 
-	for i in range(lot_offsets.size()):
-		var house_center: Vector3 = block_center + lot_offsets[i]
-		var facade := Color("72665d") if i % 2 == 0 else Color("8b8178")
-		var roof := Color("5a514b") if i % 3 == 0 else Color("6d6359")
-		_add_detailed_building(house_center, Vector3(7.8, 14.0 + float(i % 2) * 2.0, 7.8), facade, roof, 5 + (i % 2), false)
-		if i < 2:
-			_add_storefront_row(house_center + Vector3(0, 0, 3.85), 5.8, Color("c7b06f"), Color("2a2523"))
-			_register_building_site("%s_shop_%d" % [block_id, i], "Corner Shop", "shop", house_center + Vector3(0, 0.9, 0), Vector2(7.8, 7.8), ["Money Laundering", "Protection", "Collection"])
-			_add_signboard(house_center + Vector3(0, 8.2, 4.05), "BARBER" if i % 2 == 0 else "DELI", Color("d4c18a"), Color("2a2521"))
+	_add_box(block_center + Vector3(0, 0.11, 0), Vector3(6.5, 0.18, 6.5), Color("786a5b"))
+
+	var building_specs: Array[Dictionary] = [
+		{"center": block_center + Vector3(0, 0, -5.2), "footprint": Vector3(15.6, 0, 5.1), "floors": 5, "store": true, "sign": "GROCER"},
+		{"center": block_center + Vector3(0, 0, 5.2), "footprint": Vector3(15.6, 0, 5.1), "floors": 4, "store": true, "sign": "TAILOR"},
+		{"center": block_center + Vector3(-5.4, 0, 0), "footprint": Vector3(4.4, 0, 6.8), "floors": 4, "store": false, "sign": ""},
+		{"center": block_center + Vector3(5.4, 0, 0), "footprint": Vector3(4.4, 0, 6.8), "floors": 4, "store": false, "sign": ""},
+	]
+
+	for i in range(building_specs.size()):
+		var spec: Dictionary = building_specs[i]
+		var building_center: Vector3 = spec["center"]
+		var footprint: Vector3 = spec["footprint"]
+		var floors: int = spec["floors"]
+		var facade: Color = brick_primary if i % 2 == 0 else brick_secondary
+		_add_detailed_building(building_center, footprint, facade, roof_dark, floors, false)
+		_add_box(building_center + Vector3(0, 0.48, footprint.z * 0.5 - 0.1), Vector3(footprint.x, 0.96, 0.26), stone_trim)
+		if spec["store"]:
+			_add_storefront_row(building_center + Vector3(0, 0, footprint.z * 0.5 - 0.3), footprint.x - 1.8, Color("b99449"), Color("2a2523"))
+			_add_signboard(building_center + Vector3(0, 5.5, footprint.z * 0.5 + 0.02), spec["sign"], Color("dbc37d"), Color("352a24"))
+			_register_building_site("%s_shop_%d" % [block_id, i], "Street Shop", "shop", building_center + Vector3(0, 0.9, 0), Vector2(footprint.x, footprint.z), ["Money Laundering", "Protection", "Collection"])
 		else:
-			_register_building_site("%s_home_%d" % [block_id, i], "Town House", "apartment", house_center + Vector3(0, 0.9, 0), Vector2(7.8, 7.8), ["Protection", "Collection"])
+			_register_building_site("%s_home_%d" % [block_id, i], "Brick Walkup", "apartment", building_center + Vector3(0, 0.9, 0), Vector2(footprint.x, footprint.z), ["Protection", "Collection"])
 
 
 func _build_tower_block(block_center: Vector3, block_id: String) -> void:
-	var tower_offsets: Array[Vector3] = [
-		Vector3(-4.5, 0, -4.5),
-		Vector3(4.5, 0, -4.5),
-		Vector3(-4.5, 0, 4.5),
-		Vector3(4.5, 0, 4.5),
-	]
-	var tower_assets: Array[String] = _get_tower_asset_paths()
-	for i in range(tower_offsets.size()):
-		var tower_center: Vector3 = block_center + tower_offsets[i]
-		var tower_asset_path: String = tower_assets[(i + int(absf(block_center.x + block_center.z))) % tower_assets.size()]
-		var tower_rotation: Vector3 = Vector3(0, float((i % 4) * 90), 0)
-		var spawned_tower: Node3D = _spawn_asset_model(tower_asset_path, tower_center + Vector3(0, 0.02, 0), Vector3.ONE * 1.65, tower_rotation)
-		if spawned_tower == null:
-			var floors: int = 8 + (i % 3) * 2
-			var facade := Color("47484b") if i % 2 == 0 else Color("2f3134")
-			var roof := Color("737479") if i % 2 == 0 else Color("5d5f63")
-			_add_detailed_building(tower_center, Vector3(6.0, 0, 6.0), facade, roof, floors, false)
-		_add_storefront_row(tower_center + Vector3(0, 0, 3.3), 5.2, Color("bda86a"), Color("22201f"))
-		_register_building_site("%s_tower_%d" % [block_id, i], "Mixed Use Tower", "tower", tower_center + Vector3(0, 0.9, 0), Vector2(6.0, 6.0), ["Protection", "Collection", "Money Laundering"])
-		_add_signboard(tower_center + Vector3(0, 4.5, 3.55), "HOTEL" if i % 2 == 0 else "CAFE", Color("e0cc90"), Color("272423"))
+	var tower_facade: Color = Color("715848")
+	var tower_trim: Color = Color("d6c5ac")
+	var tower_roof: Color = Color("514740")
+	var podium_center: Vector3 = block_center
+	_add_detailed_building(podium_center, Vector3(14.0, 0, 14.0), tower_facade, tower_roof, 5, false)
+	_add_storefront_row(podium_center + Vector3(0, 0, 6.75), 11.5, Color("b69751"), Color("27211d"))
+	_add_signboard(podium_center + Vector3(0, 7.4, 7.05), "HOTEL", Color("dcc483"), Color("2d241f"))
+	_add_box(podium_center + Vector3(0, 13.8, 0), Vector3(9.8, 8.0, 9.8), tower_facade.lightened(0.04))
+	_add_box(podium_center + Vector3(0, 18.6, 0), Vector3(6.1, 4.4, 6.1), tower_trim)
+	_add_box(podium_center + Vector3(0, 21.0, 0), Vector3(3.2, 0.9, 3.2), tower_roof.lightened(0.1))
+	_register_building_site("%s_landmark" % block_id, "Landmark Tower", "tower", podium_center + Vector3(0, 0.9, 0), Vector2(14.0, 14.0), ["Protection", "Collection", "Money Laundering"])
 
 
 func _build_gas_station_block(block_center: Vector3, block_id: String) -> void:
-	var gas_station_asset: Node3D = _spawn_asset_model("res://assets/external/kenney_city-kit-commercial_2.1/Models/GLB format/building-g.glb", block_center + Vector3(0, 0.02, -1.4), Vector3.ONE * 2.6, Vector3.ZERO)
+	var gas_station_asset: Node3D = _spawn_asset_model("res://assets/external/kenney_city-kit-commercial_2.1/Models/GLB format/building-g.glb", block_center + Vector3(0, 0.02, -1.4), Vector3.ONE * 3.1, Vector3.ZERO)
 	if gas_station_asset == null:
-		_add_box(block_center + Vector3(0, 2.5, -3.0), Vector3(9.0, 5.0, 7.0), Color("3a3837"))
-	_add_storefront_row(block_center + Vector3(0, 0, 0.8), 7.5, Color("cab06d"), Color("22201f"))
-	_add_signboard(block_center + Vector3(0, 4.8, 1.0), "FUEL", Color("e2d3a1"), Color("532621"))
+		_add_detailed_building(block_center + Vector3(0, 0, -3.0), Vector3(11.0, 0, 7.2), Color("714e3a"), Color("463c36"), 2, false)
+	_add_storefront_row(block_center + Vector3(0, 0, 0.8), 8.8, Color("cab06d"), Color("22201f"))
+	_add_signboard(block_center + Vector3(0, 5.1, 1.0), "FUEL", Color("e2d3a1"), Color("532621"))
 	_add_box(block_center + Vector3(0, 3.3, 5.2), Vector3(12.0, 0.6, 5.0), Color("6b6762"))
 	_add_box(block_center + Vector3(-3.2, 1.3, 5.2), Vector3(1.1, 2.6, 1.1), Color("73706b"))
 	_add_box(block_center + Vector3(3.2, 1.3, 5.2), Vector3(1.1, 2.6, 1.1), Color("73706b"))
@@ -1349,8 +1288,26 @@ func _add_signboard(pos: Vector3, text: String, panel_color: Color, frame_color:
 	sign.position = pos + Vector3(0, -0.15, 0.3)
 	sign.rotation_degrees = Vector3(0, 0, 0)
 	sign.font_size = 28
-	sign.modulate = Color("2a221c")
+	sign.modulate = Color("34281f")
 	add_child(sign)
+
+
+func _build_corner_block(block_center: Vector3, block_id: String) -> void:
+	var base_facade: Color = Color("7a513d")
+	var base_roof: Color = Color("493c35")
+	var trim: Color = Color("d6c5ac")
+	var corner_positions: Array[Vector3] = [
+		block_center + Vector3(-4.8, 0, -4.8),
+		block_center + Vector3(4.8, 0, -4.8),
+		block_center + Vector3(-4.8, 0, 4.8),
+		block_center + Vector3(4.8, 0, 4.8),
+	]
+	for i in range(corner_positions.size()):
+		var building_center: Vector3 = corner_positions[i]
+		_add_detailed_building(building_center, Vector3(8.2, 0, 8.2), base_facade.darkened(float(i % 2) * 0.08), base_roof, 5 + (i % 2), false)
+		_add_box(building_center + Vector3(0, 0.52, 4.0), Vector3(8.2, 1.04, 0.28), trim)
+		_add_storefront_row(building_center + Vector3(0, 0, 3.78), 6.4, Color("b99f62"), Color("26211d"))
+		_register_building_site("%s_corner_%d" % [block_id, i], "Corner Commerce", "shop", building_center + Vector3(0, 0.9, 0), Vector2(8.2, 8.2), ["Money Laundering", "Protection", "Collection"])
 
 func _add_street(pos: Vector3, street_size: Vector3, road_color: Color = Color("2f3134"), curb_color: Color = Color("7d7264")) -> void:
 	_add_box(pos, street_size, road_color)
@@ -1366,9 +1323,12 @@ func _add_detailed_building(center: Vector3, footprint: Vector3, facade_color: C
 	var total_height: float = float(floors) * 2.6
 	var body_size := Vector3(footprint.x, total_height, footprint.z)
 	_add_box(center + Vector3(0, total_height * 0.5, 0), body_size, facade_color)
+	_add_box(center + Vector3(0, 0.72, 0), Vector3(footprint.x + 0.35, 1.44, footprint.z + 0.35), facade_color.darkened(0.18))
 	_add_box(center + Vector3(0, total_height + 0.35, 0), Vector3(footprint.x + 0.8, 0.7, footprint.z + 0.8), roof_color)
 	_add_box(center + Vector3(0, 0.45, footprint.z * 0.5 - 0.15), Vector3(footprint.x * 0.92, 0.9, 0.35), roof_color.darkened(0.15))
 	_add_box(center + Vector3(0, total_height * 0.35, footprint.z * 0.5 + 0.14), Vector3(footprint.x * 0.14, total_height * 0.72, 0.22), roof_color.lightened(0.08))
+	_add_box(center + Vector3(-footprint.x * 0.5 + 0.3, total_height * 0.5, 0), Vector3(0.42, total_height, footprint.z + 0.16), facade_color.lightened(0.14))
+	_add_box(center + Vector3(footprint.x * 0.5 - 0.3, total_height * 0.5, 0), Vector3(0.42, total_height, footprint.z + 0.16), facade_color.lightened(0.14))
 
 	var window_rows: int = max(1, floors)
 	var window_columns: int = max(2, int(floor(footprint.x / 2.8)))
@@ -1376,7 +1336,8 @@ func _add_detailed_building(center: Vector3, footprint: Vector3, facade_color: C
 		for col in range(window_columns):
 			var x_offset: float = -footprint.x * 0.35 + (float(col) * (footprint.x * 0.7 / max(1, window_columns - 1)))
 			var y_offset: float = 1.2 + float(row) * 2.2
-			_add_box(center + Vector3(x_offset, y_offset, footprint.z * 0.5 + 0.08), Vector3(0.8, 1.1, 0.16), Color("d9d4c8") if row % 3 == 0 else Color("8c8578"))
+			_add_box(center + Vector3(x_offset, y_offset, footprint.z * 0.5 + 0.08), Vector3(0.8, 1.1, 0.16), Color("d9d4c8") if row % 3 == 0 else Color("958976"))
+			_add_box(center + Vector3(x_offset, y_offset, -footprint.z * 0.5 - 0.08), Vector3(0.8, 1.1, 0.16), Color("d0c8b9") if row % 2 == 0 else Color("887b68"))
 
 	if industrial_style:
 		_add_box(center + Vector3(-footprint.x * 0.22, total_height + 1.8, -footprint.z * 0.2), Vector3(1.0, 3.6, 1.0), roof_color.darkened(0.2))
@@ -1638,16 +1599,13 @@ func _make_material(color: Color) -> StandardMaterial3D:
 
 func _noir_grade(color: Color) -> Color:
 	var luminance: float = (color.r * 0.299) + (color.g * 0.587) + (color.b * 0.114)
-	var grayscale := Color(luminance, luminance, luminance, color.a)
-	var warm_accent: Color = Color("c9ae73")
-	var red_accent: Color = Color("8b2d22")
-	if color.r > color.g * 1.2 and color.r > color.b * 1.2:
-		return grayscale.lerp(red_accent, 0.55)
-	if color.g > 0.7 and color.r > 0.6:
-		return grayscale.lerp(warm_accent, 0.62)
-	if color.b > color.r * 1.2:
-		return grayscale.lerp(Color("87909a"), 0.24)
-	return grayscale
+	var sepia := Color(
+		clampf((luminance * 1.08) + 0.14, 0.0, 1.0),
+		clampf((luminance * 0.93) + 0.08, 0.0, 1.0),
+		clampf((luminance * 0.72) + 0.02, 0.0, 1.0),
+		color.a
+	)
+	return sepia.lerp(color.darkened(0.18), 0.38)
 
 
 func _get_house_asset_paths() -> Array[String]:
@@ -1767,7 +1725,7 @@ func _make_crew_portrait(name: String, accent_color: Color) -> Texture2D:
 
 
 func _update_day_night_cycle(delta: float) -> void:
-	time_of_day = wrapf(time_of_day + (delta / DAY_NIGHT_CYCLE), 0.0, 1.0)
+	time_of_day = 0.34
 	var day_angle: float = time_of_day * TAU
 	var sun_height: float = sin(day_angle)
 	var daylight: float = clampf((sun_height + 0.18) / 1.12, 0.0, 1.0)
@@ -1783,14 +1741,14 @@ func _update_day_night_cycle(delta: float) -> void:
 		fill_light.light_color = Color("607199").lerp(Color("8f8475"), daylight)
 
 	if world_environment != null:
-		world_environment.background_color = Color("11131a").lerp(Color("7c7469"), daylight)
-		world_environment.ambient_light_color = Color("596684").lerp(Color("8e8579"), daylight)
-		world_environment.ambient_light_energy = lerpf(0.32, 0.58, daylight)
-		world_environment.fog_light_color = Color("17191f").lerp(Color("6e675e"), daylight)
-		world_environment.fog_density = lerpf(0.014, 0.006, daylight)
+		world_environment.background_color = Color("a89270").lerp(Color("ccb48f"), daylight)
+		world_environment.ambient_light_color = Color("a08e73").lerp(Color("bda582"), daylight)
+		world_environment.ambient_light_energy = lerpf(0.70, 0.78, daylight)
+		world_environment.fog_light_color = Color("8c7358").lerp(Color("c7ab82"), daylight)
+		world_environment.fog_density = lerpf(0.006, 0.0035, daylight)
 
 	for street_light: OmniLight3D in street_lights:
-		street_light.light_energy = lerpf(1.85, 0.0, daylight)
+		street_light.light_energy = lerpf(4.2, 0.0, daylight)
 
 
 func _add_lane_markings_horizontal(center_x: float, z_pos: float, segment_length: float) -> void:
@@ -1828,10 +1786,10 @@ func _add_crosswalks(intersection_center: Vector3) -> void:
 
 func _add_traffic_light_cluster(intersection_center: Vector3) -> void:
 	var offsets: Array[Vector3] = [
-		Vector3(-2.6, 0, -2.6),
-		Vector3(2.6, 0, -2.6),
-		Vector3(-2.6, 0, 2.6),
-		Vector3(2.6, 0, 2.6),
+		Vector3(-5.2, 0, -5.2),
+		Vector3(5.2, 0, -5.2),
+		Vector3(-5.2, 0, 5.2),
+		Vector3(5.2, 0, 5.2),
 	]
 	for offset: Vector3 in offsets:
 		var pole := MeshInstance3D.new()
@@ -1916,11 +1874,16 @@ func _vehicle_should_stop(current_position: Vector3, target_position: Vector3) -
 
 
 func _add_block_sidewalk_details(block_center: Vector3) -> void:
-	var detail_color: Color = Color("9a907f")
-	_add_box(block_center + Vector3(0, 0.055, -BLOCK_SIZE * 0.5 + 1.1), Vector3(BLOCK_SIZE - 2.0, 0.04, 1.2), detail_color)
-	_add_box(block_center + Vector3(0, 0.055, BLOCK_SIZE * 0.5 - 1.1), Vector3(BLOCK_SIZE - 2.0, 0.04, 1.2), detail_color)
-	_add_box(block_center + Vector3(-BLOCK_SIZE * 0.5 + 1.1, 0.055, 0), Vector3(1.2, 0.04, BLOCK_SIZE - 2.0), detail_color)
-	_add_box(block_center + Vector3(BLOCK_SIZE * 0.5 - 1.1, 0.055, 0), Vector3(1.2, 0.04, BLOCK_SIZE - 2.0), detail_color)
+	var detail_color: Color = Color("c1b39b")
+	var curb_color: Color = Color("93846e")
+	_add_box(block_center + Vector3(0, 0.055, -BLOCK_SIZE * 0.5 + 1.1), Vector3(BLOCK_SIZE - 1.6, 0.04, 1.45), detail_color)
+	_add_box(block_center + Vector3(0, 0.055, BLOCK_SIZE * 0.5 - 1.1), Vector3(BLOCK_SIZE - 1.6, 0.04, 1.45), detail_color)
+	_add_box(block_center + Vector3(-BLOCK_SIZE * 0.5 + 1.1, 0.055, 0), Vector3(1.45, 0.04, BLOCK_SIZE - 1.6), detail_color)
+	_add_box(block_center + Vector3(BLOCK_SIZE * 0.5 - 1.1, 0.055, 0), Vector3(1.45, 0.04, BLOCK_SIZE - 1.6), detail_color)
+	_add_box(block_center + Vector3(0, 0.11, -BLOCK_SIZE * 0.5 + 2.0), Vector3(BLOCK_SIZE - 4.8, 0.05, 0.28), curb_color)
+	_add_box(block_center + Vector3(0, 0.11, BLOCK_SIZE * 0.5 - 2.0), Vector3(BLOCK_SIZE - 4.8, 0.05, 0.28), curb_color)
+	_add_box(block_center + Vector3(-BLOCK_SIZE * 0.5 + 2.0, 0.11, 0), Vector3(0.28, 0.05, BLOCK_SIZE - 4.8), curb_color)
+	_add_box(block_center + Vector3(BLOCK_SIZE * 0.5 - 2.0, 0.11, 0), Vector3(0.28, 0.05, BLOCK_SIZE - 4.8), curb_color)
 
 	for corner: Vector3 in [Vector3(-6.4, 0, -6.4), Vector3(6.4, 0, -6.4), Vector3(-6.4, 0, 6.4), Vector3(6.4, 0, 6.4)]:
 		_add_street_lamp(block_center + corner)
@@ -1950,11 +1913,12 @@ func _add_tree(tree_pos: Vector3) -> void:
 func _add_street_lamp(lamp_pos: Vector3) -> void:
 	_add_box(lamp_pos + Vector3(0, 1.9, 0), Vector3(0.18, 3.8, 0.18), Color("474747"))
 	_add_box(lamp_pos + Vector3(0, 3.95, 0), Vector3(0.52, 0.28, 0.52), Color("c9b779"))
+	_add_box(lamp_pos + Vector3(0, 3.72, 0), Vector3(0.24, 0.24, 0.24), Color("ffe1a6"))
 	var street_light := OmniLight3D.new()
 	street_light.position = lamp_pos + Vector3(0, 3.85, 0)
 	street_light.light_color = Color("ffd89a")
 	street_light.light_energy = 0.0
-	street_light.omni_range = 18.0
+	street_light.omni_range = 26.0
 	street_light.shadow_enabled = false
 	add_child(street_light)
 	street_lights.append(street_light)
